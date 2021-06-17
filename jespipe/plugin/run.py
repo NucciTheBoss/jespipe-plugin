@@ -1,4 +1,4 @@
-def run(params=None, build=None, fit=None, predict=None, evaluate=None):
+def run(parameters=None, build=None, fit=None, predict=None, evaluate=None):
     """Function to launch the model functions in pipeline.
     
     Keyword arguments:
