@@ -14,6 +14,10 @@ from keras.utils.np_utils import to_categorical
 
 class BuildLSTM(Build):
     def __init__(self, parameters):
+        """Initialize the build stage of the model.
+        
+        Keyword Arguments:
+        parameters -- parameters passed via command-line necessary for building the model."""
         self.dataset_name = parameters["dataset_name"]
         self.dataframe = parameters["dataframe"]
         self.model_params = parameters["model_params"]
@@ -43,8 +47,8 @@ class BuildLSTM(Build):
         # Compile model
         model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-        # Return created model
-        return model
+        # Return created model and training data and testing data
+        return model, (feat_train, label_train, feat_test, label_test)
 
     def _load_data(self, data, seq_len, feature_count):
         """Loading/splitting the data into the training and testing data.
@@ -83,11 +87,34 @@ class BuildLSTM(Build):
 
 
 class FitLSTM(Fit):
-    def __init__(self):
-        pass
+    def __init__(self, model, feat_train, label_train, parameters):
+        """Fit the LSTM model to its training data.
+        
+        Keyword arguments:
+        model -- model to fit to training data.
+        feat_train -- data set training features.
+        label_train -- data set training labels.
+        parameters -- parameters passed via command-line necessary for fitting the model."""
+        self.model = model
+        self.feat_train = feat_train
+        self.label_train = label_train
+        self.model_params = parameters["model_params"]
+        self.batch_size = self.model_params["batch_size"]
+        self.epochs = self.model_params["epochs"]
+        self.validation_split = self.model_params["validation_split"]
+        self.verbose = self.model_params["verbose"]
 
     def model_fit(self):
-        pass
+        fitted_model = self.model.fit(
+            self.feat_train,
+            self.label_train,
+            batch_size=self.batch_size,
+            epochs=self.epochs,
+            validation_split=self.validation_split,
+            verbose=self.verbose
+        )
+
+        return fitted_model
 
 
 class PredictLSTM(Predict):
