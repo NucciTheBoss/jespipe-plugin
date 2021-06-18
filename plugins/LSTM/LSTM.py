@@ -3,7 +3,6 @@ from jespipe.plugin.fit import Fit
 from jespipe.plugin.predict import Predict
 from jespipe.plugin.evaluate import Evaluate
 from jespipe.plugin.start import start
-from jespipe.plugin.run import run
 import numpy as np
 from keras.optimizers import Adam
 from keras.models import Sequential, load_model
@@ -135,6 +134,3 @@ class EvaluateLSTM(Evaluate):
 
 if __name__ == "__main__":
     parameters = start()
-    LSTM_build = BuildLSTM(); LSTM_fit = FitLSTM()
-    LSTM_predict = PredictLSTM(); LSTM_evaluate = EvaluateLSTM()
-    run(parameters=parameters, build=LSTM_build, fit=LSTM_fit, predict=LSTM_predict, evaluate=LSTM_evaluate)
