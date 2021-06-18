@@ -12,40 +12,14 @@ from keras.layers.recurrent import LSTM
 from keras.utils.np_utils import to_categorical
 
 
-class LSTM:
-    def __init__(self, x_train, y_train, x_test, y_test, feature_count, file_name, sequence_length):
-        self.x_train = x_train
-        self.y_train = y_train
-        self.x_test = x_test
-        self.y_test = y_test
-        self.feature_count = feature_count
-        self.file_name = file_name
-
-    def _build_model(self, file_name):
-        
-
-
 class BuildLSTM(Build):
-    def build_model(self, parameters):
+    def __init__(self):
         pass
 
-
-class FitLSTM(Fit):
-    def model_fit(self, parameters):
+    def build_model(self):
         pass
 
-
-class PredictLSTM(Predict):
-    def model_predict(self, parameters, model):
-        pass
-
-
-class EvaluateLSTM(Evaluate):
-    def model_evaluate(self, model):
-        pass
-
-
-def _load_data(data, seq_len, feature_count):
+    def _load_data(data, seq_len, feature_count):
     """Loading/splitting the data into the training and testing data.
     
     Keyword arguments:
@@ -65,7 +39,7 @@ def _load_data(data, seq_len, feature_count):
     # In-place shuffling for saving space
     np.random.shuffle(result)
 
-    # Amount of data to train on
+    # Amount of data to train on. Train: 85%; Test: 15%
     row = len(result) * 0.85
     train = result[:int(row), :]
     x_train = train[:, :, :-1]
@@ -79,6 +53,30 @@ def _load_data(data, seq_len, feature_count):
     x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], feature_count))
 
     return x_train, y_train, x_test, y_test
+
+
+class FitLSTM(Fit):
+    def __init__(self):
+        pass
+
+    def model_fit(self, parameters):
+        pass
+
+
+class PredictLSTM(Predict):
+    def __init__(self):
+        pass
+
+    def model_predict(self):
+        pass
+
+
+class EvaluateLSTM(Evaluate):
+    def __init__(self):
+        pass
+
+    def model_evaluate(self):
+        pass
 
 
 if __name__ == "__main__":
