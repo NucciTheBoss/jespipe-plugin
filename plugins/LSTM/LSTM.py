@@ -157,3 +157,40 @@ class EvaluateLSTM(Evaluate):
 if __name__ == "__main__":
     stage, parameters = start()
 
+    # Execute code block based on passed stage from pipeline
+    if stage == "train":
+        # Pull necessary information from parameters
+        dataset_name = parameters["dataset_name"]
+        model_save_path = parameters["save_path"]
+        model_log_path = parameters["log_path"]
+        manip_info = parameters["manip_info"]
+
+        # Build the LSTM model
+        build_lstm = BuildLSTM(parameters)
+        model, data = build_lstm.build_model()
+
+        # Fit the LSTM model on the training data
+        fit_lstm = FitLSTM(model, data[0], data[1], parameters)
+        fitted_model = fit_lstm.model_fit()
+        # TODO: Come up with method to name models
+        fitted_model.save(model_save_path, include_optimizer=True)
+
+        # Make a prediction on test set
+        predict_lstm = PredictLSTM(fitted_model, data[2])
+        prediction = predict_lstm.model_predict()
+
+        # Evaluate model performance on prediction
+        evaluate_lstm = EvaluateLSTM(data[3], prediction)
+        accuracy = evaluate_lstm.model_evaluate()
+        # TODO: Write logging mechanism for accuracy of model
+
+    elif stage == "attack":
+        # TODO: Will involve utilizing the load_model function that is a part of the Keras API
+        pass
+
+    elif stage == "clean":
+        # TODO: Write implementation for the cleaning stage
+        pass
+
+    else:
+        raise ValueError("Received invalid stage {}. Please only pass valid stages from the pipeline.".format(stage))
