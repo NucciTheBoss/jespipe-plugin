@@ -117,20 +117,43 @@ class FitLSTM(Fit):
 
 
 class PredictLSTM(Predict):
-    def __init__(self):
-        pass
+    def __init__(self, model, predictee):
+        """Make predictions on data using the LSTM model.
+        
+        Keyword arguments:
+        model -- model to make predictions with.
+        predictee -- data to make prediction on."""
+        self.model = model
+        self.predictee = predictee
 
     def model_predict(self):
-        pass
+        prediction = self.model.predict(self.predictee)
+        return prediction
 
 
 class EvaluateLSTM(Evaluate):
-    def __init__(self):
-        pass
+    def __init__(self, label_test, model_prediction):
+        """Evaluate predictions made by trained LSTM model.
+        
+        Keyword arguments:
+        label_test -- test labels to be used to evaluate model's prediction.
+        model_prediction -- LSTM model's prediction to evaulate."""
+        self.label_test = label_test
+        self.model_prediction = model_prediction
 
     def model_evaluate(self):
-        pass
+        accuracy = self._eval_accuracy
+        return accuracy
+
+    @property
+    def _eval_accuracy(self):
+        """Evaluate model's accuracy on test data."""
+        pred_argmax = np.argmax(self.model_prediction, axis=1)
+        label_test_argmax = np.argmax(self.label_test, axis=1)
+        accuracy = np.sum(pred_argmax == label_test_argmax) / len(self.label_test)
+        return accuracy
 
 
 if __name__ == "__main__":
-    parameters = start()
+    stage, parameters = start()
+
