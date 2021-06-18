@@ -2,7 +2,7 @@ import argparse
 
 
 def start():
-    """Pull three parameters from stdin; stage, dataset, and parameters."""
+    """Pull two parameters from stdin; stage and parameters."""
     parser = argparse.ArgumentParser()
     parser.add_argument("stage", nargs=1)
     parser.add_argument("parameters", nargs=1)

@@ -13,7 +13,16 @@ from keras.utils.np_utils import to_categorical
 
 
 class LSTM:
-    pass
+    def __init__(self, x_train, y_train, x_test, y_test, feature_count, file_name, sequence_length):
+        self.x_train = x_train
+        self.y_train = y_train
+        self.x_test = x_test
+        self.y_test = y_test
+        self.feature_count = feature_count
+        self.file_name = file_name
+
+    def _build_model(self, file_name):
+        
 
 
 class BuildLSTM(Build):
