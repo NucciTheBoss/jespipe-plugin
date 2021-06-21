@@ -8,7 +8,6 @@ from keras.optimizers import Adam
 from keras.models import Sequential, load_model
 from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.recurrent import LSTM
-from keras.utils.np_utils import to_categorical
 
 
 class BuildLSTM(Build):
@@ -44,7 +43,7 @@ class BuildLSTM(Build):
         opt = Adam(learning_rate=learn_rate)
 
         # Compile model
-        model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
+        model.compile(loss="mean_squared_error", optimizer=opt, metrics=["accuracy", "mean_squared_error"])
 
         # Return created model and training data and testing data
         return model, (feat_train, label_train, feat_test, label_test)
@@ -72,12 +71,11 @@ class BuildLSTM(Build):
         # Amount of data to train on. Train: 85%; Test: 15%
         row = len(result) * 0.85
         train = result[:int(row), :]
+
         x_train = train[:, :, :-1]
-        
-        # One-hot encoding
-        y_train = to_categorical(train[:, -1][:, -1])
+        y_train = train[:, -1][:, -1]
         x_test = result[int(row):, :, :-1]
-        y_test = to_categorical(result[int(row):, -1][:, -1])
+        y_test = result[int(row):, -1][:, -1]
 
         x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], feature_count))
         x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], feature_count))
@@ -152,6 +150,8 @@ class EvaluateLSTM(Evaluate):
         label_test_argmax = np.argmax(self.label_test, axis=1)
         accuracy = np.sum(pred_argmax == label_test_argmax) / len(self.label_test)
         return accuracy
+
+    # TODO: Add method that allows us to evaluate mean_squared_error
 
 
 if __name__ == "__main__":
