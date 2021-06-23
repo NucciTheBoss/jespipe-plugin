@@ -157,6 +157,9 @@ class EvaluateLSTM(Evaluate):
 if __name__ == "__main__":
     stage, parameters = start()
 
+    # Convert parameters to the their respective datatype
+    stage = stage[0]; parameters = parameters[0]
+
     # Execute code block based on passed stage from pipeline
     if stage == "train":
         # Pull necessary information from parameters
