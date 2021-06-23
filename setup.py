@@ -10,7 +10,11 @@ setup(
     author_email="nucci.programming@gmail.com",
     license="BSD 2-clause",
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        "tensorflow",
+        "Keras",
+        "numpy"
+    ],
 
     keywords=['machine-learning', 'adversarial-machine-learning', 'automation', 'plugin'],
     classifiers=[
