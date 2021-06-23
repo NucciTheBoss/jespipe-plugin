@@ -1,13 +1,16 @@
 import argparse
-import json
+import joblib
 
 
 def start():
     """Pull two parameters from stdin; stage and parameters."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("stage", nargs=1, type=str)
-    parser.add_argument("parameters", nargs=1, type=json.loads)
+    parser.add_argument("stage", type=str)
+    parser.add_argument("parameters", type=str)
     args = parser.parse_args()
 
-    # Return tuple in the following format: (stage, dataset, parameters)
-    return args.stage, args.parameters
+    # Load pickled parameter dictionary
+    params = joblib.load(args.parameters)
+
+    # Return tuple in the following format: (stage, parameters)
+    return args.stage, params

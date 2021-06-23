@@ -5,9 +5,9 @@ from jespipe.plugin.evaluate import Evaluate
 from jespipe.plugin.start import start
 import numpy as np
 from keras.optimizers import Adam
-from keras.models import Sequential, load_model
-from keras.layers.core import Dense, Dropout, Activation
-from keras.layers.recurrent import LSTM
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.layers import Dense, Dropout, Activation, LSTM
 
 
 class BuildLSTM(Build):
@@ -152,18 +152,19 @@ class EvaluateLSTM(Evaluate):
         return accuracy
 
     # TODO: Add method that allows us to evaluate mean_squared_error
+    @property
+    def _eval_mse(self):
+        pass
 
 
 if __name__ == "__main__":
     stage, parameters = start()
 
-    # Convert parameters to the their respective datatype
-    stage = stage[0]; parameters = parameters[0]
-
     # Execute code block based on passed stage from pipeline
     if stage == "train":
         # Pull necessary information from parameters
         dataset_name = parameters["dataset_name"]
+        model_name = parameters["model_name"]
         model_save_path = parameters["save_path"]
         model_log_path = parameters["log_path"]
         manip_info = parameters["manip_info"]
