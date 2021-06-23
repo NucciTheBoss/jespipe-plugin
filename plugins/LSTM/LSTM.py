@@ -4,7 +4,6 @@ from jespipe.plugin.predict import Predict
 from jespipe.plugin.evaluate import Evaluate
 from jespipe.plugin.start import start
 import numpy as np
-from keras.optimizers import Adam
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Dropout, Activation, LSTM
