@@ -3,7 +3,11 @@ from jespipe.plugin.fit import Fit
 from jespipe.plugin.predict import Predict
 from jespipe.plugin.evaluate import Evaluate
 from jespipe.plugin.start import start
+import joblib
 import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Dropout, Activation, LSTM
@@ -25,6 +29,9 @@ class BuildLSTM(Build):
         feature_count = self.dataframe.shape[1]-1
         learn_rate = self.model_params["learning_rate"]
 
+        # Convert sequence_length and learn_rate to proper data types
+        sequence_length = int(sequence_length); learn_rate = float(learn_rate)
+
         # Split into training and test
         feat_train, label_train, feat_test, label_test = self._load_data(self.dataframe, sequence_length, feature_count)
 
@@ -35,14 +42,14 @@ class BuildLSTM(Build):
             model.add(LSTM(feature_count, input_shape=feat_train.shape[1:], return_sequences=True))
             model.add(Dropout(0.1))
 
-        model.add(LSTM(label_train.shape[1], return_sequences=False))
+        model.add(LSTM(label_train.shape[0], return_sequences=False))
         model.add(Dropout(0.1))
-        model.add(Dense(units=label_train.shape[1]))
+        model.add(Dense(units=label_train.shape[0]))
         model.add(Activation("softmax"))
         opt = Adam(learning_rate=learn_rate)
 
         # Compile model
-        model.compile(loss="mean_squared_error", optimizer=opt, metrics=["accuracy", "mean_squared_error"])
+        model.compile(loss="mean_squared_error", optimizer=opt, metrics=["mean_squared_error"])
 
         # Return created model and training data and testing data
         return model, (feat_train, label_train, feat_test, label_test)
@@ -101,16 +108,14 @@ class FitLSTM(Fit):
         self.verbose = self.model_params["verbose"]
 
     def model_fit(self):
-        fitted_model = self.model.fit(
+        self.model.fit(
             self.feat_train,
             self.label_train,
-            batch_size=self.batch_size,
-            epochs=self.epochs,
-            validation_split=self.validation_split,
-            verbose=self.verbose
+            batch_size=int(self.batch_size),
+            epochs=int(self.epochs),
+            validation_split=float(self.validation_split),
+            verbose=int(self.verbose)
         )
-
-        return fitted_model
 
 
 class PredictLSTM(Predict):
@@ -139,21 +144,18 @@ class EvaluateLSTM(Evaluate):
         self.model_prediction = model_prediction
 
     def model_evaluate(self):
-        accuracy = self._eval_accuracy
-        return accuracy
+        """Return desired performance metrics"""
+        return self._eval_mse, self._eval_rmse
 
-    @property
-    def _eval_accuracy(self):
-        """Evaluate model's accuracy on test data."""
-        pred_argmax = np.argmax(self.model_prediction, axis=1)
-        label_test_argmax = np.argmax(self.label_test, axis=1)
-        accuracy = np.sum(pred_argmax == label_test_argmax) / len(self.label_test)
-        return accuracy
-
-    # TODO: Add method that allows us to evaluate mean_squared_error
     @property
     def _eval_mse(self):
-        pass
+        """Evaluate the mean squared error of the model's prediction."""
+        return mean_squared_error(self.label_test, self.model_prediction)
+
+    @property
+    def _eval_rmse(self):
+        """Evaluate the root mean squared error of the model's prediction."""
+        return np.sqrt(mean_squared_error(self.label_test, self.model_prediction))
 
 
 if __name__ == "__main__":
@@ -168,18 +170,22 @@ if __name__ == "__main__":
         model_log_path = parameters["log_path"]
         manip_info = parameters["manip_info"]
 
+        # Normalize data to 0, 1 scale
+        sc = MinMaxScaler(feature_range=(0, 1))
+        parameters.update({"dataframe": pd.DataFrame(sc.fit_transform(parameters["dataframe"]))})
+
         # Build the LSTM model
         build_lstm = BuildLSTM(parameters)
         model, data = build_lstm.build_model()
 
         # Fit the LSTM model on the training data
         fit_lstm = FitLSTM(model, data[0], data[1], parameters)
-        fitted_model = fit_lstm.model_fit()
+        fit_lstm.model_fit()
         # TODO: Come up with method to name models
-        fitted_model.save(model_save_path, include_optimizer=True)
+        fit_lstm.model.save(model_save_path, include_optimizer=True)
 
         # Make a prediction on test set
-        predict_lstm = PredictLSTM(fitted_model, data[2])
+        predict_lstm = PredictLSTM(fit_lstm.model, data[2])
         prediction = predict_lstm.model_predict()
 
         # Evaluate model performance on prediction
