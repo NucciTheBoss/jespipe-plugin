@@ -3,7 +3,7 @@ from jespipe.plugin.fit import Fit
 from jespipe.plugin.predict import Predict
 from jespipe.plugin.evaluate import Evaluate
 from jespipe.plugin.start import start
-import joblib
+import jespipe.plugin.save as save
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -134,28 +134,34 @@ class PredictLSTM(Predict):
 
 
 class EvaluateLSTM(Evaluate):
-    def __init__(self, label_test, model_prediction):
+    def __init__(self, feature_test, label_test, model_to_eval):
         """Evaluate predictions made by trained LSTM model.
         
         Keyword arguments:
         label_test -- test labels to be used to evaluate model's prediction.
         model_prediction -- LSTM model's prediction to evaulate."""
+        self.feature_test = feature_test
         self.label_test = label_test
-        self.model_prediction = model_prediction
+        self.model_to_eval = model_to_eval
 
     def model_evaluate(self):
         """Return desired performance metrics"""
-        return self._eval_mse, self._eval_rmse
+        mse = self._eval_mse()
+        return mse, self._eval_rmse(mse)
 
-    @property
     def _eval_mse(self):
         """Evaluate the mean squared error of the model's prediction."""
-        return mean_squared_error(self.label_test, self.model_prediction)
+        score = self.model_to_eval.evaluate(self.feature_test, self.label_test, verbose=0)
 
-    @property
-    def _eval_rmse(self):
-        """Evaluate the root mean squared error of the model's prediction."""
-        return np.sqrt(mean_squared_error(self.label_test, self.model_prediction))
+        # Index 1 is MSE; index 0 is loss
+        return score[1]
+
+    def _eval_rmse(self, mse):
+        """Evaluate the root mean squared error of the model's prediction.
+        
+        Keyword arguments:
+        mse -- mean-squared-error."""
+        return np.sqrt(mse)
 
 
 if __name__ == "__main__":
@@ -166,13 +172,15 @@ if __name__ == "__main__":
         # Pull necessary information from parameters
         dataset_name = parameters["dataset_name"]
         model_name = parameters["model_name"]
+        dataframe = parameters["dataframe"]
         model_save_path = parameters["save_path"]
         model_log_path = parameters["log_path"]
+        model_params = parameters["model_params"]
         manip_info = parameters["manip_info"]
 
         # Normalize data to 0, 1 scale
         sc = MinMaxScaler(feature_range=(0, 1))
-        parameters.update({"dataframe": pd.DataFrame(sc.fit_transform(parameters["dataframe"]))})
+        parameters.update({"dataframe": pd.DataFrame(sc.fit_transform(dataframe))})
 
         # Build the LSTM model
         build_lstm = BuildLSTM(parameters)
@@ -181,17 +189,25 @@ if __name__ == "__main__":
         # Fit the LSTM model on the training data
         fit_lstm = FitLSTM(model, data[0], data[1], parameters)
         fit_lstm.model_fit()
-        # TODO: Come up with method to name models
-        fit_lstm.model.save(model_save_path, include_optimizer=True)
+
+        # Save data to the model_save_path
+        save.dictionary(model_save_path, "model_parameters.json", model_params)
+        save.pickle(model_save_path, "test_features.pkl", data[2]); save.pickle(model_save_path, "test_labels.pkl", data[3])
+        save.compress_dataframe(model_save_path + "/data", "baseline-data-normalized.csv.gz", dataframe)
+        save.text(model_save_path, "model_summary.txt", fit_lstm.model.summary())
+        fit_lstm.model.save(model_save_path + "/{}-{}-{}.h5".format(model_name, manip_info[0], manip_info[1]), include_optimizer=True)
 
         # Make a prediction on test set
         predict_lstm = PredictLSTM(fit_lstm.model, data[2])
         prediction = predict_lstm.model_predict()
 
+        # Save base prediction for later analysis if desired
+        save.compress_dataframe(model_save_path + "/data", "baseline-prediction.csv.gz", pd.DataFrame(prediction))
+
         # Evaluate model performance on prediction
         evaluate_lstm = EvaluateLSTM(data[3], prediction)
-        accuracy = evaluate_lstm.model_evaluate()
-        # TODO: Write logging mechanism for accuracy of model
+        mse, rmse = evaluate_lstm.model_evaluate()
+        # TODO: Create way to save the mse and rmse of the baseline <- performance before attack
 
     elif stage == "attack":
         # TODO: Will involve utilizing the load_model function that is a part of the Keras API
