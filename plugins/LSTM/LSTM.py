@@ -193,7 +193,7 @@ if __name__ == "__main__":
         save.dictionary(model_save_path, "model_parameters.json", model_params)
         save.pickle(model_save_path, "test_features.pkl", data[2]); save.pickle(model_save_path, "test_labels.pkl", data[3])
         save.compress_dataframe(model_save_path + "/data", "baseline-data-normalized.csv.gz", dataframe)
-        save.text(model_save_path, "model_summary.txt", fit_lstm.model.summary())
+        with open(model_save_path + "/model_summary.txt", "wt") as fout: fit_lstm.model.summary(print_fn=lambda x: fout.write(x))
         fit_lstm.model.save(model_save_path + "/{}-{}-{}.h5".format(model_name, manip_info[0], manip_info[1]), include_optimizer=True)
 
         # Make a prediction on test set
@@ -206,7 +206,11 @@ if __name__ == "__main__":
         # Evaluate model performance on prediction
         evaluate_lstm = EvaluateLSTM(data[3], prediction)
         mse, rmse = evaluate_lstm.model_evaluate()
-        # TODO: Create way to save the mse and rmse of the baseline <- performance before attack
+        
+        # Create dictionary for logging mse and rmse and then save as a pickle to be loaded back in during the attacks
+        # 0.0 marks 0.0 pertubation bugdet -> baseline performance
+        log_dict = {"0.0": {"mse": mse, "rmse": rmse}}
+        save.pickle(model_log_path, "mse-rmse.pkl", log_dict)
 
     elif stage == "attack":
         # TODO: Will involve utilizing the load_model function that is a part of the Keras API
