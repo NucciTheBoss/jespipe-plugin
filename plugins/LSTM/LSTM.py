@@ -193,7 +193,7 @@ if __name__ == "__main__":
         save.dictionary(model_save_path, "model_parameters.json", model_params)
         save.pickle(model_save_path, "test_features.pkl", data[2]); save.pickle(model_save_path, "test_labels.pkl", data[3])
         save.compress_dataframe(model_save_path + "/data", "baseline-data-normalized.csv.gz", dataframe)
-        with open(model_save_path + "/model_summary.txt", "wt") as fout: fit_lstm.model.summary(print_fn=lambda x: fout.write(x))
+        with open(model_save_path + "/model_summary.txt", "wt") as fout: fit_lstm.model.summary(print_fn=lambda x: fout.write(x + "\n"))
         fit_lstm.model.save(model_save_path + "/{}-{}-{}.h5".format(model_name, manip_info[0], manip_info[1]), include_optimizer=True)
 
         # Make a prediction on test set
@@ -204,10 +204,10 @@ if __name__ == "__main__":
         save.compress_dataframe(model_save_path + "/data", "baseline-prediction.csv.gz", pd.DataFrame(prediction))
 
         # Evaluate model performance on prediction
-        evaluate_lstm = EvaluateLSTM(data[3], prediction)
+        evaluate_lstm = EvaluateLSTM(data[2], data[3], fit_lstm.model)
         mse, rmse = evaluate_lstm.model_evaluate()
         
-        # Create dictionary for logging mse and rmse and then save as a pickle to be loaded back in during the attacks
+        # Create dictionary for logging mse and rmse and then save as a pickle to be loaded back into memory during the attacks
         # 0.0 marks 0.0 pertubation bugdet -> baseline performance
         log_dict = {"0.0": {"mse": mse, "rmse": rmse}}
         save.pickle(model_log_path, "mse-rmse.pkl", log_dict)
