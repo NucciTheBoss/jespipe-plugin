@@ -1,5 +1,6 @@
 from jespipe.plugin.attack.attack import Attack
 from jespipe.plugin.start import start
+import jespipe.plugin.save as save
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
@@ -164,6 +165,7 @@ if __name__ == "__main__":
     if stage == "attack":
         attack = CarliniL2(parameters["model_path"], parameters["attack_params"])
         result = attack.attack()
+        save.adver_example(parameters["save_path"], parameters["attack_params"]["min_change"], result)
 
     else:
         raise ValueError("Received invalid stage {}. Please only pass valid stages from the pipeline.".format(stage))
