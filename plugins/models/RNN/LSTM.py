@@ -193,7 +193,7 @@ if __name__ == "__main__":
         # Save data to the model_save_path
         save.dictionary(model_save_path, "model_parameters.json", model_params)
         save.dictionary(model_save_path, "{}_manipulation_parameters.json".format(manip_info[0]), manip_params)
-        save.pickle(model_save_path, "test_features.pkl", data[2]); save.pickle(model_save_path, "test_labels.pkl", data[3])
+        save.features(model_save_path, data[2]); save.labels(model_save_path, data[3])
         save.compress_dataframe(model_save_path + "/data", "baseline-data-normalized.csv.gz", dataframe)
         with open(model_save_path + "/model_summary.txt", "wt") as fout: fit_lstm.model.summary(print_fn=lambda x: fout.write(x + "\n"))
         fit_lstm.model.save(model_save_path + "/{}-{}-{}.h5".format(model_name, manip_info[0], manip_info[1]), include_optimizer=True)
