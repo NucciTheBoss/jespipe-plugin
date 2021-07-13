@@ -65,7 +65,7 @@ def compress_dataframe(file_path: str, name: str, dataset: pd.DataFrame) -> None
     if os.path.exists(file_path) is False:
         os.makedirs(file_path)
 
-    dataset.to_csv(file_path + "/{}".format(name), index=False, header=None, compression="gzip")
+    dataset.to_csv(file_path + "/{}.csv.gz".format(name), index=False, header=None, compression="gzip")
 
 
 def dataframe(file_path: str, name: str, dataset: pd.DataFrame) -> None:
@@ -81,7 +81,7 @@ def dataframe(file_path: str, name: str, dataset: pd.DataFrame) -> None:
     if os.path.exists(file_path) is False:
         os.makedirs(file_path)
 
-    dataset.to_csv(file_path + "/{}".format(name), index=False, header=None)
+    dataset.to_csv(file_path + "/{}.csv".format(name), index=False, header=None)
 
 
 def dictionary(file_path: str, name: str, dictdata: dict) -> None:

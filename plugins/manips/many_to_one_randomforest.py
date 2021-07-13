@@ -34,7 +34,7 @@ class RandomForestManip(Manipulation):
           - _preproc_randomforest: Internal vanilla preprocessing method for passed dataset.
         """
         self.dataset = pd.read_csv(parameters["dataset"], header=None)
-        self.manip_tag = parameters["manip_tags"]
+        self.manip_tag = parameters["manip_tag"]
         self.save_path = parameters["save_path"]
         self.tmp_path = parameters["tmp_path"]
 
