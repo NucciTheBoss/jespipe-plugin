@@ -45,7 +45,7 @@ class RandomForestManip(Manipulation):
         subprocess.getoutput().
         """
         features, labels = self._preproc_randomforest()
-        recomb = pd.concat([features, labels], axis=1, join="inner")
+        recomb = pd.concat([pd.DataFrame(features), pd.DataFrame(labels)], axis=1, join="inner")
 
         # Save copy of current DataFrame for later analysis
         save.dataframe(self.save_path, self.manip_tag, recomb)
@@ -57,7 +57,7 @@ class RandomForestManip(Manipulation):
         # Print out pickle path to be captured by subprocess.getoutput()
         print(pickle_path)
 
-    def _preproc_randomforest(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def _preproc_randomforest(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Internal RandomForest feature selection preprocessing method for passed dataset.
         Splits DataFrame into features and labels.

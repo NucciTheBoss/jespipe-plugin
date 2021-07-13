@@ -43,7 +43,7 @@ class VanillaManip(Manipulation):
         subprocess.getoutput().
         """
         features, labels = self._preproc_vanilla()
-        recomb = pd.concat([features, labels], axis=1, join="inner")
+        recomb = pd.concat([pd.DataFrame(features), pd.DataFrame(labels)], axis=1, join="inner")
 
         # Save copy of current DataFrame for later analysis
         save.dataframe(self.save_path, self.manip_tag, recomb)
@@ -55,7 +55,7 @@ class VanillaManip(Manipulation):
         # Print out pickle path to be captured by subprocess.getoutput()
         print(pickle_path)
 
-    def _preproc_vanilla(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def _preproc_vanilla(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Internal vanilla preprocessing method for passed dataset.
         Splits DataFrame into features and labels.

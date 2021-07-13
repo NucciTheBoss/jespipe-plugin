@@ -44,7 +44,7 @@ class CandlestickManip(Manipulation):
         subprocess.getoutput().
         """
         features, labels = self._preproc_candlestick()
-        recomb = pd.concat([features, labels], axis=1, join="inner")
+        recomb = pd.concat([pd.DataFrame(features), pd.DataFrame(labels)], axis=1, join="inner")
 
         # Save copy of current DataFrame for later analysis
         save.dataframe(self.save_path, self.manip_tag, recomb)
@@ -56,7 +56,7 @@ class CandlestickManip(Manipulation):
         # Print out pickle path to be captured by subprocess.getoutput()
         print(pickle_path)
 
-    def _preproc_candlestick(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def _preproc_candlestick(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Internal Candlestick trend extraction preprocessing method for passed dataset.
         Splits DataFrame into features and labels.
