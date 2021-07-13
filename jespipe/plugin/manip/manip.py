@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class Manip(ABC):
+class Manipulation(ABC):
     @abstractmethod
     def manipulate(self):
         pass
