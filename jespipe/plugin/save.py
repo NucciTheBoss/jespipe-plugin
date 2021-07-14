@@ -36,6 +36,21 @@ def labels(file_path: str, object: Any) -> None:
     joblib.dump(object, file_path + "/test_labels.pkl")
 
 
+def pickle_object(file_path: str, name: str, object: Any) -> None:
+    """
+    Save any generic object as pickle. Useful for generic analysis files.
+
+    ### Parameters:
+    :param file_path: System location to save pickle file.
+    :param name: File name to use for the Object pickle file.
+    :param object: Object containing data to pickle.
+    """
+    if os.path.exists(file_path) is False:
+        os.makedirs(file_path)
+
+    joblib.dump(object, file_path + "/{}.pkl".format(name))
+
+
 def adver_example(file_path: str, min_change: float, object: Any) -> None:
     """
     Save a generated adversarial example as a pickle.
@@ -97,7 +112,7 @@ def dictionary(file_path: str, name: str, dictdata: dict) -> None:
     if os.path.exists(file_path) is False:
         os.makedirs(file_path)
 
-    fout = open(file_path + "/{}".format(name), "wt"); fout.write(json.dumps(dictdata)); fout.close()
+    fout = open(file_path + "/{}.json".format(name), "wt"); fout.write(json.dumps(dictdata)); fout.close()
 
 
 def text(file_path: str, name: str, textdata: str) -> None:

@@ -1,35 +1,51 @@
-from jespipe.plugin.train.build import Build
-from jespipe.plugin.train.fit import Fit
-from jespipe.plugin.train.predict import Predict
-from jespipe.plugin.train.evaluate import Evaluate
-from jespipe.plugin.start import start
+from typing import Tuple
+
 import jespipe.plugin.save as save
 import numpy as np
 import pandas as pd
+from jespipe.plugin.start import start
+from jespipe.plugin.train.build import Build
+from jespipe.plugin.train.evaluate import Evaluate
+from jespipe.plugin.train.fit import Fit
+from jespipe.plugin.train.predict import Predict
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import LSTM, Activation, Dense, Dropout
 from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense, Dropout, Activation, LSTM
+from tensorflow.keras.optimizers import Adam
 
 
 class BuildLSTM(Build):
-    def __init__(self, parameters):
-        """Initialize the build stage of the model.
+    def __init__(self, parameters: dict) -> None:
+        """
+        Build class to initialize Sequential LSTM model.
         
-        Keyword Arguments:
-        parameters -- parameters passed via command-line necessary for building the model."""
+        ### Parameters:
+        :param parameters: Parameter dictionary sent by Jespipe.
+
+        ### Methods:
+        - public
+          - build_model (abstract): Build LSTM RNN model using uncompromised data.
+        - private
+          - _load_data: Internal method for loading/splitting the data into the training and testing data.
+        """
         self.dataset_name = parameters["dataset_name"]
         self.dataframe = parameters["dataframe"]
         self.model_params = parameters["model_params"]
 
-    def build_model(self):
-        """Build LSTM RNN model using uncompromised data."""
+    def build_model(self) -> Tuple[Sequential, Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+        """
+        Build LSTM RNN model using uncompromised data.
+
+        ### Returns:
+        :return: (model, (feat_train, label_train, feat_test, label_test))
+        - Positional value of each index in the tuple:
+          - 0: An unfitted Sequential LSTM model.
+          - 1: The training dataset split into training features, training labels, 
+          test features, and test labels.
+        """
         sequence_length = self.model_params["sequence_length"]
         feature_count = self.dataframe.shape[1]-1
         learn_rate = self.model_params["learning_rate"]
-
-        # Convert sequence_length and learn_rate to proper data types
-        sequence_length = int(sequence_length); learn_rate = float(learn_rate)
 
         # Split into training and test
         feat_train, label_train, feat_test, label_test = self._load_data(self.dataframe, sequence_length, feature_count)
@@ -53,13 +69,23 @@ class BuildLSTM(Build):
         # Return created model and training data and testing data
         return model, (feat_train, label_train, feat_test, label_test)
 
-    def _load_data(self, data, seq_len, feature_count):
-        """Loading/splitting the data into the training and testing data.
+    def _load_data(self, data: pd.DataFrame, seq_len: int, feature_count: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Internal method for loading/splitting the data into the training and testing data.
         
-        Keyword arguments:
-        data -- the dataset to split into training and testing data.
-        seq_len -- user-controlled hyperparameter for LSTM architecture.
-        feature_count -- number of features in the data set."""
+        ### Parameters:
+        :param data: Passed dataset to split into training and testing features and labels.
+        :param seq_len: User-controlled hyperparameter for LSTM architecture.
+        :param feature_count: Number of features in the passed dataset.
+
+        ### Returns:
+        :return: (x_train, y_train, x_test, y_test)
+        - Positional value of each index in the tuple:
+          - 0: Training features.
+          - 1: Training labels.
+          - 2: Test features.
+          - 3: Test labels.
+        """
         result = np.zeros((len(data) - seq_len, seq_len, feature_count+1))
 
         # Sequence lengths remain together
@@ -89,14 +115,21 @@ class BuildLSTM(Build):
 
 
 class FitLSTM(Fit):
-    def __init__(self, model, feat_train, label_train, parameters):
-        """Fit the LSTM model to its training data.
+    def __init__(self, model: Sequential, feat_train: np.ndarray, 
+                    label_train: np.ndarray, parameters: dict) -> None:
+        """
+        Fit class to facilitate fitting Sequential LSTM model to training data.
         
-        Keyword arguments:
-        model -- model to fit to training data.
-        feat_train -- data set training features.
-        label_train -- data set training labels.
-        parameters -- parameters passed via command-line necessary for fitting the model."""
+        ### Paramters:
+        :param model: Sequential LSTM model to fit to training data.
+        :param feat_train: Training features.
+        :param label_train: Training labels.
+        :param parameters: Parameter dictionary sent by Jespipe.
+        
+        ### Methods:
+        - public
+          - model_fit (abstract): Fit Sequential LSTM model using user-specified hyperparameters.
+        """
         self.model = model
         self.feat_train = feat_train
         self.label_train = label_train
@@ -106,60 +139,109 @@ class FitLSTM(Fit):
         self.validation_split = self.model_params["validation_split"]
         self.verbose = self.model_params["verbose"]
 
-    def model_fit(self):
+    def model_fit(self) -> None:
+        """
+        Fit Sequential LSTM model using user-specified hyperparameters.
+        """
         self.model.fit(
             self.feat_train,
             self.label_train,
-            batch_size=int(self.batch_size),
-            epochs=int(self.epochs),
-            validation_split=float(self.validation_split),
-            verbose=int(self.verbose)
+            batch_size=self.batch_size,
+            epochs=self.epochs,
+            validation_split=self.validation_split,
+            verbose=self.verbose
         )
 
 
 class PredictLSTM(Predict):
-    def __init__(self, model, predictee):
-        """Make predictions on data using the LSTM model.
+    def __init__(self, model: Sequential, predictee: np.ndarray) -> None:
+        """
+        Prediction class to facilitate making predictions with Sequential LSTM model.
         
-        Keyword arguments:
-        model -- model to make predictions with.
-        predictee -- data to make prediction on."""
+        ### Parameters:
+        :param model: Sequential LSTM model to make predictions with.
+        :param predictee: Data to make prediction on.
+        
+        ### Methods:
+        - public
+          - model_predict (abstract): Make prediction on data using Sequential LSTM model.
+        """
         self.model = model
         self.predictee = predictee
 
-    def model_predict(self):
+    def model_predict(self) -> np.ndarray:
+        """
+        Make prediction on data using Sequential LSTM model.
+
+        ### Returns:
+        :return: Sequential LSTM model's prediction
+        """
         prediction = self.model.predict(self.predictee)
         return prediction
 
 
 class EvaluateLSTM(Evaluate):
-    def __init__(self, feature_test, label_test, model_to_eval):
-        """Evaluate predictions made by trained LSTM model.
+    def __init__(self, feature_test: np.ndarray, label_test: np.ndarray, 
+                    model_to_eval: Sequential) -> None:
+        """
+        Evaluation class to facilitate evalutions predictions made by fitted Sequential LSTM model.
         
-        Keyword arguments:
-        label_test -- test labels to be used to evaluate model's prediction.
-        model_prediction -- LSTM model's prediction to evaulate."""
+        ### Parameters:
+        :param feature_test: Test features.
+        :param label_test: Test labels.
+        :param model_to_eval: Sequential LSTM model to evaulate.
+
+        ### Methods:
+        - public
+          - model_evaluate (abstract):
+        - private:
+          - _eval_mse: Internal method to evaluate the mean squared error 
+          of the Sequential LSTM model's prediction.
+          - _eval_rmse: Internal method to evaluate the root 
+          mean squared error of the Sequential LSTM model's prediction
+        """
         self.feature_test = feature_test
         self.label_test = label_test
         self.model_to_eval = model_to_eval
 
-    def model_evaluate(self):
-        """Return desired performance metrics"""
+    def model_evaluate(self) -> Tuple[float, float]:
+        """
+        Evaluate the mean squared error and root mean squared error of 
+        the Sequential LSTM model's prediction.
+
+        ### Returns:
+        :return: (mse, rmse)
+        - Positional value of each index in the tuple:
+          - 0: Mean squared error of model's prediction.
+          - 1: Root mean squared error of model's prediction.
+        """
         mse = self._eval_mse()
         return mse, self._eval_rmse(mse)
 
-    def _eval_mse(self):
-        """Evaluate the mean squared error of the model's prediction."""
+    def _eval_mse(self) -> float:
+        """
+        Internal method to evaluate the mean squared error 
+        of the Sequential LSTM model's prediction.
+
+        ### Returns:
+        :return: Mean squared error of the Sequential LSTM model's prediction.
+        """
         score = self.model_to_eval.evaluate(self.feature_test, self.label_test, verbose=0)
 
         # Index 1 is MSE; index 0 is loss
         return score[1]
 
-    def _eval_rmse(self, mse):
-        """Evaluate the root mean squared error of the model's prediction.
+    def _eval_rmse(self, mse: float) -> float:
+        """
+        Internal method to evaluate the root mean 
+        squared error of the Sequential LSTM model's prediction.
         
-        Keyword arguments:
-        mse -- mean-squared-error."""
+        ### Parameters:
+        :param mse: Mean squared error of the Sequential LSTM model's prediction.
+        
+        ### Returns:
+        :return: Root mean squared error of the Sequential LSTM model's prediction.
+        """
         return np.sqrt(mse)
 
 
@@ -191,10 +273,10 @@ if __name__ == "__main__":
         fit_lstm.model_fit()
 
         # Save data to the model_save_path
-        save.dictionary(model_save_path, "model_parameters.json", model_params)
-        save.dictionary(model_save_path, "{}_manipulation_parameters.json".format(manip_info[0]), manip_params)
+        save.dictionary(model_save_path, "model_parameters", model_params)
+        save.dictionary(model_save_path, "{}_manipulation_parameters".format(manip_info[0]), manip_params)
         save.features(model_save_path, data[2]); save.labels(model_save_path, data[3])
-        save.compress_dataframe(model_save_path + "/data", "baseline-data-normalized.csv.gz", dataframe)
+        save.compress_dataframe(model_save_path + "/data", "baseline-data-normalized", dataframe)
         with open(model_save_path + "/model_summary.txt", "wt") as fout: fit_lstm.model.summary(print_fn=lambda x: fout.write(x + "\n"))
         fit_lstm.model.save(model_save_path + "/{}-{}-{}.h5".format(model_name, manip_info[0], manip_info[1]), include_optimizer=True)
 
@@ -203,7 +285,7 @@ if __name__ == "__main__":
         prediction = predict_lstm.model_predict()
 
         # Save base prediction for later analysis if desired
-        save.compress_dataframe(model_save_path + "/data", "baseline-prediction.csv.gz", pd.DataFrame(prediction))
+        save.compress_dataframe(model_save_path + "/data", "baseline-prediction", pd.DataFrame(prediction))
 
         # Evaluate model performance on prediction
         evaluate_lstm = EvaluateLSTM(data[2], data[3], fit_lstm.model)
@@ -212,14 +294,10 @@ if __name__ == "__main__":
         # Create dictionary for logging mse and rmse and then save as a pickle to be loaded back into memory during the attacks
         # 0.0 marks 0.0 pertubation bugdet -> baseline performance
         log_dict = {"0.0": {"mse": mse, "rmse": rmse}}
-        save.pickle(model_log_path, "mse-rmse.pkl", log_dict)
+        save.pickle_object(model_log_path, "mse-rmse", log_dict)
 
     elif stage == "attack":
         # TODO: Will involve utilizing the load_model function that is a part of the Keras API
-        pass
-
-    elif stage == "clean":
-        # TODO: Write implementation for the cleaning stage
         pass
 
     else:
