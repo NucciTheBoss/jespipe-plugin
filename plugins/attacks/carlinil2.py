@@ -1,8 +1,8 @@
-from jespipe.plugin.attack.attack import Attack
-from jespipe.plugin.start import start
 import jespipe.plugin.save as save
 import numpy as np
 import tensorflow as tf
+from jespipe.plugin.attack.attack import Attack
+from jespipe.plugin.start import start
 from tensorflow.keras.models import load_model
 from tqdm import trange
 
@@ -12,13 +12,21 @@ class CarliniL2(Attack):
     This is a modified version of the L_2 optimized attack of Carlini and Wagner (2016).
     It has been modified to fit time series regression problems.
     """
-    def __init__(self, model, parameters):
+    def __init__(self, model, parameters) -> None:
         """
         Create a Carlini&Wagner L_2 attack instance.
-        :param model: Absolute file path to trained regressor model.
-        :param parameters: Parameter dictionary sent by jespipe.
-        """
 
+        ### Parameters:
+        :param model: System file path to trained regressor model.
+        :param parameters: Parameter dictionary sent by Jespipe.
+
+        ### Methods:
+        - public
+          - attack (abstract): Launch L_2 attack on the given time series data.
+        - private
+          - _generate: Internal method to perform the L_2 attack on the given time series data.
+          - _generate_batch: Internal method to generate batched adversarial samples and return them in an array.
+        """
         self.model = load_model(model)
         self.original_data = parameters["original_data"]
         self.min_change = parameters["min_change"]
@@ -30,13 +38,23 @@ class CarliniL2(Attack):
         self.sequence_length = parameters["sequence_length"]
         self.verbose = parameters["verbose"]
 
-    def attack(self):
+    def attack(self) -> np.ndarray:
+        """
+        Launch L_2 attack on the given time series data.
+
+        ### Returns:
+        :return: An array holding the adversarial examples.
+        """
         return self._generate(self.original_data)
 
     def _generate(self, x: np.ndarray, **kwargs) -> np.ndarray:
         """
-        Perform the L_2 attack on the given time series data.
+        Internal method to perform the L_2 attack on the given time series data.
+
+        ### Parameters:
         :param x: An array with the original inputs to be attacked.
+
+        ### Returns:
         :return: An array holding the adversarial examples.
         """
         num_rows, num_cols = x.shape
@@ -62,8 +80,12 @@ class CarliniL2(Attack):
     
     def _generate_batch(self, x: np.ndarray, **kwargs) -> np.ndarray:
         """
-        Generate batched adversarial samples and return them in an array.
+        Internal method to generate batched adversarial samples and return them in an array.
+
+        ### Parameters:
         :param x: An array with the batched original inputs to be attacked.
+
+        ### Returns:
         :return: An array holding the batched adversarial examples.
         """
         
@@ -80,7 +102,7 @@ class CarliniL2(Attack):
         # Initialize boolean to decide if advesarial examples should predict above or below original
         # Since the adv examples are normalized between [0,1], adv examples that predict values approaching 0 or 1 are difficult to generate, hence the bool
         mean = pred.mean()
-        above = (mean <= 5)
+        above = (mean <= 0.5)
         
         for bss in range(self.binary_search_steps):
             
