@@ -1,5 +1,7 @@
 from typing import Tuple
 
+import joblib
+
 import jespipe.plugin.save as save
 import numpy as np
 import pandas as pd
@@ -193,7 +195,8 @@ class EvaluateLSTM(Evaluate):
 
         ### Methods:
         - public
-          - model_evaluate (abstract):
+          - model_evaluate (abstract): Evaluate the mean squared error and root mean squared error of 
+          the Sequential LSTM model's prediction.
         - private:
           - _eval_mse: Internal method to evaluate the mean squared error 
           of the Sequential LSTM model's prediction.
@@ -297,8 +300,24 @@ if __name__ == "__main__":
         save.pickle_object(model_log_path, "mse-rmse", log_dict)
 
     elif stage == "attack":
-        # TODO: Will involve utilizing the load_model function that is a part of the Keras API
-        pass
+        # Load in model to evaluate
+        model = parameters["model_path"]; model = load_model(model)
+
+        # Load mse-rmse.pkl file to access dictionary
+        log_dict = joblib.load(parameters["log_path"] + "/mse-rmse.pkl")
+
+        # Load test_features
+        test_labels = joblib.load(parameters["model_labels"])
+
+        # Loop through each of the adversarial examples
+        for adversary in parameters["adver_features"]:
+            evaluate_lstm = EvaluateLSTM(joblib.load(adversary), test_labels, model)
+            mse, rmse = evaluate_lstm.model_evaluate()
+            perturb_budget = adversary.split("/"); perturb_budget = perturb_budget[-1].split("."); perturb_budget = perturb_budget[0]
+            log_dict.update({perturb_budget: {"mse": mse, "rmse": rmse}})
+
+        # Once looping through all the adversarial examples has completed, dump updated log dict
+        save.pickle_object(parameters["log_path"], "mse-rmse", log_dict)
 
     else:
         raise ValueError("Received invalid stage {}. Please only pass valid stages from the pipeline.".format(stage))
