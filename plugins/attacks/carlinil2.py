@@ -1,5 +1,4 @@
 import jespipe.plugin.save as save
-import joblib
 import numpy as np
 import tensorflow as tf
 from jespipe.plugin.attack.attack import Attack
@@ -186,7 +185,7 @@ if __name__ == "__main__":
 
     # Execute code block based on passed stage from pipeline
     if stage == "attack":
-        attack = CarliniL2(parameters["model_path"], joblib.load(parameters["model_test_features"]), parameters["attack_params"])
+        attack = CarliniL2(parameters["model_path"], parameters["model_test_features"], parameters["attack_params"])
         result = attack.attack()
         save.adver_example(parameters["save_path"], parameters["attack_params"]["min_change"], result)
 
