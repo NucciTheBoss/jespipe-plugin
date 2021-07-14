@@ -1,4 +1,5 @@
 import jespipe.plugin.save as save
+import joblib
 import numpy as np
 import tensorflow as tf
 from jespipe.plugin.attack.attack import Attack
@@ -12,7 +13,7 @@ class CarliniL2(Attack):
     This is a modified version of the L_2 optimized attack of Carlini and Wagner (2016).
     It has been modified to fit time series regression problems.
     """
-    def __init__(self, model, parameters) -> None:
+    def __init__(self, model: str, features: np.ndarray, parameters: dict) -> None:
         """
         Create a Carlini&Wagner L_2 attack instance.
 
@@ -28,7 +29,7 @@ class CarliniL2(Attack):
           - _generate_batch: Internal method to generate batched adversarial samples and return them in an array.
         """
         self.model = load_model(model)
-        self.original_data = parameters["original_data"]
+        self.features = features
         self.min_change = parameters["min_change"]
         self.learning_rate = parameters["learning_rate"]
         self.max_iter = parameters["max_iter"]
@@ -45,7 +46,7 @@ class CarliniL2(Attack):
         ### Returns:
         :return: An array holding the adversarial examples.
         """
-        return self._generate(self.original_data)
+        return self._generate(self.features)
 
     def _generate(self, x: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -185,7 +186,7 @@ if __name__ == "__main__":
 
     # Execute code block based on passed stage from pipeline
     if stage == "attack":
-        attack = CarliniL2(parameters["model_path"], parameters["attack_params"])
+        attack = CarliniL2(parameters["model_path"], joblib.load(parameters["model_test_features"]), parameters["attack_params"])
         result = attack.attack()
         save.adver_example(parameters["save_path"], parameters["attack_params"]["min_change"], result)
 
