@@ -44,7 +44,7 @@ class CandlestickManip(Manipulation):
         subprocess.getoutput().
         """
         features, labels = self._preproc_candlestick()
-        recomb = pd.concat([pd.DataFrame(features), pd.DataFrame(labels)], axis=1, join="inner")
+        recomb = pd.concat([pd.DataFrame(features), pd.DataFrame(labels)], axis=1)
 
         # Save copy of current DataFrame for later analysis
         save.dataframe(self.save_path, self.manip_tag, recomb)
