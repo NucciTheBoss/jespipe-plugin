@@ -307,7 +307,7 @@ if __name__ == "__main__":
         log_dict = joblib.load(parameters["log_path"] + "/mse-rmse.pkl")
 
         # Load test_features
-        test_labels = joblib.load(parameters["model_labels"])
+        test_labels = parameters["model_labels"]
 
         # Loop through each of the adversarial examples
         for adversary in parameters["adver_features"]:
