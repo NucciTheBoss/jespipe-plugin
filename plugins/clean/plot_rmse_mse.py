@@ -3,10 +3,22 @@ from jespipe.plugin.clean.plotter import Plot
 
 
 class RMSEMSE(Plot):
-    def __init__(self) -> None:
+    def __init__(self, parameters: dict) -> None:
+        """
+        Create a RMSEMSE plotter instance.
+
+        ### Parameters:
+        :param parameters: Parameter dictionary sent by Jespipe
+
+        ### Methods:
+        - public
+          - plot (abstract): Create plot using data passed by the user.
+        """
         pass
 
     def plot(self) -> None:
+        """
+        """
         pass
 
 
