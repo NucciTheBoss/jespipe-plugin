@@ -61,7 +61,8 @@ class BuildLSTM(Build):
 
         model.add(LSTM(label_train.shape[0], return_sequences=False))
         model.add(Dropout(0.1))
-        model.add(Dense(units=label_train.shape[0]))
+        # model.add(Dense(units=label_train.shape[0])) <- Old dense layer. Removing to view impact
+        model.add(Dense(units=1))
         model.add(Activation("softmax"))
         opt = Adam(learning_rate=learn_rate)
 
