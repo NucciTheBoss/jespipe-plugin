@@ -29,7 +29,7 @@ class CarliniL2(Attack):
         """
         self.model = load_model(model)
         self.features = features
-        self.min_change = parameters["min_change"]
+        self.min_change = parameters["change"]
         self.learning_rate = parameters["learning_rate"]
         self.max_iter = parameters["max_iter"]
         self.binary_search_steps = parameters["binary_search_steps"]
