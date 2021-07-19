@@ -11,7 +11,7 @@ from jespipe.plugin.train.evaluate import Evaluate
 from jespipe.plugin.train.fit import Fit
 from jespipe.plugin.train.predict import Predict
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.layers import LSTM, Activation, Dense, Dropout
+from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam
 
@@ -56,13 +56,12 @@ class BuildLSTM(Build):
         model = Sequential()
 
         for i in range(5):
-            model.add(LSTM(feature_count, input_shape=feat_train.shape[1:], return_sequences=True))
+            model.add(LSTM(input_shape=feat_train.shape[1:], units=30, return_sequences=True))
             model.add(Dropout(0.1))
 
-        model.add(LSTM(label_train.shape[0], return_sequences=False))
+        model.add(LSTM(30, return_sequences=False))
         model.add(Dropout(0.1))
-        model.add(Dense(units=label_train.shape[0]))
-        model.add(Activation("softmax"))
+        model.add(Dense(units=1))
         opt = Adam(learning_rate=learn_rate)
 
         # Compile model
@@ -313,7 +312,7 @@ if __name__ == "__main__":
         for adversary in parameters["adver_features"]:
             evaluate_lstm = EvaluateLSTM(joblib.load(adversary), test_labels, model)
             mse, rmse = evaluate_lstm.model_evaluate()
-            perturb_budget = adversary.split("/"); perturb_budget = perturb_budget[-1].split("."); perturb_budget = perturb_budget[0]
+            perturb_budget = adversary.split("/"); perturb_budget = perturb_budget[-1].split(".pkl"); perturb_budget = perturb_budget[0]
             log_dict.update({perturb_budget: {"mse": mse, "rmse": rmse}})
 
         # Once looping through all the adversarial examples has completed, dump updated log dict

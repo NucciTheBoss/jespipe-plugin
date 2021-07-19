@@ -29,7 +29,7 @@ class CarliniL2(Attack):
         """
         self.model = load_model(model)
         self.features = features
-        self.min_change = parameters["min_change"]
+        self.min_change = parameters["change"]
         self.learning_rate = parameters["learning_rate"]
         self.max_iter = parameters["max_iter"]
         self.binary_search_steps = parameters["binary_search_steps"]
@@ -57,24 +57,15 @@ class CarliniL2(Attack):
         ### Returns:
         :return: An array holding the adversarial examples.
         """
-        num_rows, num_cols = x.shape
-        
-        # Reformat test set to include sequence length
-        x_sequence = []
-        for i in range(len(x)-self.sequence_length):
-            s = []
-            for j in range(0, self.sequence_length):
-                s.append(x[[(i + j)], :])
-            x_sequence.append(s)
-        x_sequence = np.array(x_sequence)
-        x_sequence = x_sequence.reshape(x_sequence.shape[0],self.sequence_length, num_cols)
+        pred = self.model.predict(x)
+        self.mean = pred.mean()
         
         # Generate adversarial examples
-        x_adv = np.zeros(x_sequence.shape)
-        nb_batches = int(np.ceil(x_sequence.shape[0] / float(self.batch_size)))
+        x_adv = np.zeros(x.shape)
+        nb_batches = int(np.ceil(x.shape[0] / float(self.batch_size)))
         for i in trange(nb_batches, desc="C&W L_2", disable = not self.verbose):
             index = i * self.batch_size
-            x_adv[index:index+self.batch_size] = (self._generate_batch(x_sequence[index:index+self.batch_size]))
+            x_adv[index:index+self.batch_size] = (self.generate_batch(x[index:index+self.batch_size]))
         print(x_adv.shape)
         return x_adv
     
@@ -88,7 +79,6 @@ class CarliniL2(Attack):
         ### Returns:
         :return: An array holding the batched adversarial examples.
         """
-        
         # Initialize constant for binary search:
         c_current = np.ones(x.shape[0]) * self.initial_const
         c_best = np.zeros(x.shape[0])
@@ -102,7 +92,14 @@ class CarliniL2(Attack):
         # Initialize boolean to decide if advesarial examples should predict above or below original
         # Since the adv examples are normalized between [0,1], adv examples that predict values approaching 0 or 1 are difficult to generate, hence the bool
         mean = pred.mean()
-        above = (mean <= 0.5)
+        above = (mean <= self.mean)
+        
+        if above:
+            if mean + self.min_change > 0.9:
+                above = False
+        else:
+            if mean - self.min_change < 0.1:
+                above = True
         
         for bss in range(self.binary_search_steps):
             
