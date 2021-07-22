@@ -18,7 +18,8 @@ class CarliniL2(Attack):
 
         ### Parameters:
         :param model: System file path to trained regressor model.
-        :param parameters: Parameter dictionary sent by Jespipe.
+        :param model_test_features: Test features to use for adversarial example generation.
+        :param parameters: Parameter dictionary for the attack.
 
         ### Methods:
         - public
@@ -65,7 +66,7 @@ class CarliniL2(Attack):
         nb_batches = int(np.ceil(x.shape[0] / float(self.batch_size)))
         for i in trange(nb_batches, desc="C&W L_2", disable = not self.verbose):
             index = i * self.batch_size
-            x_adv[index:index+self.batch_size] = (self.generate_batch(x[index:index+self.batch_size]))
+            x_adv[index:index+self.batch_size] = (self._generate_batch(x[index:index+self.batch_size]))
         print(x_adv.shape)
         return x_adv
     
@@ -184,7 +185,7 @@ if __name__ == "__main__":
     if stage == "attack":
         attack = CarliniL2(parameters["model_path"], parameters["model_test_features"], parameters["attack_params"])
         result = attack.attack()
-        save.adver_example(parameters["save_path"], parameters["attack_params"]["min_change"], result)
+        save.adver_example(parameters["save_path"], parameters["attack_params"]["change"], result)
 
     else:
         raise ValueError("Received invalid stage {}. Please only pass valid stages from the pipeline.".format(stage))
