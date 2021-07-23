@@ -1,58 +1,62 @@
+import jespipe.plugin.save as save
 import numpy as np
 import tensorflow as tf
+from jespipe.plugin.attack.attack import Attack
+from jespipe.plugin.start import start
+from tensorflow.keras.models import load_model
 from tqdm import trange
 
-# Global Variables
-MIN_CHANGE = 0.05                # Min change > 0.2 is not advised as the normalized values do not allow for predictions outside [0,1]
-LEARNING_RATE = 1e-2
-MAX_ITER = 300
-BATCH_SIZE = 5                   # Batch sizes > 5 don't generate good results
-INITIAL_CONST = 0.1
-LARGEST_CONST = 100
-SEQUENCE_LENGTH = 36
-DECREASE_FACTOR = 0.9
-VERBOSE = True
 
-class CarliniLinf:
+class CarliniLinf(Attack):
     """
     This is a modified version of the L_inf optimized attack of Carlini and Wagner (2016).
     It has been modified to fit time series regression problems.
     """
-    def __init__(self, model, min_change = MIN_CHANGE, learning_rate = LEARNING_RATE,
-                 max_iter = MAX_ITER, batch_size = BATCH_SIZE, initial_const = INITIAL_CONST,
-                 largest_const = LARGEST_CONST, sequence_length = SEQUENCE_LENGTH,
-                 decrease_factor = DECREASE_FACTOR, verbose = VERBOSE):
+    def __init__(self, model: str, features: np.ndarray, parameters: dict) -> None:
         """
         Create a Carlini&Wagner L_inf attack instance.
-        :param model: A trained regressor model.
-        :param min_change: The minimum change of the output that signals a successful attack.
-        :param learning_rate: The initial learning rate for the attack algorithm. Smaller values produce better
-                results but are slower to converge.
-        :param max_iter: The maximum number of iterations.
-        :param binary_search_steps: The number of times to adjust the constant with binary search.
-        :param batch_size: Size of the batch on which adversarial samples are generated.
-        :param initial_const: The initial value of the constant c.
-        :param largest_const: The largest value for the constant c.
-        :param sequence_length: The sequence length for the time series data.
-        :param decrease_factor: The rate at which tau shrinks.
-        :param verbose: Show progress bars.
-        """
 
-        self.model = model
-        self.min_change = min_change
-        self.learning_rate = learning_rate
-        self.max_iter = max_iter
-        self.batch_size = batch_size
-        self.initial_const = initial_const
-        self.largest_const = largest_const
-        self.sequence_length = sequence_length
-        self.decrease_factor = decrease_factor
-        self.verbose = verbose
+        ### Parameters:
+        :param model: System file path to trained regressor model.
+        :param model_test_features: Test features to use for adversarial example generation.
+        :param parameters: Parameter dictionary for the attack.
 
-    def generate(self, x: np.ndarray, **kwargs) -> np.ndarray:
+        ### Methods:
+        - public
+          - attack (abstract): Launch L_inf attack on the given time series data.
+        - private
+          - _generate: Internal method to perform the L_inf attack on the given time series data.
+          - _generate_batch: Internal method to generate batched adversarial samples and return them in an array.
         """
-        Perform the L_inf attack on the given time series data.
+        self.model = load_model(model)
+        self.features = features
+        self.min_change = parameters["change"]
+        self.learning_rate = parameters["learning_rate"]
+        self.max_iter = parameters["max_iter"]
+        self.batch_size = parameters["batch_size"]
+        self.initial_const = parameters["initial_const"]
+        self.largest_const = parameters["largest_const"]
+        self.sequence_length = parameters["sequence_length"]
+        self.decrease_factor = parameters["decrease_factor"]
+        self.verbose = parameters["verbose"]
+
+    def attack(self) -> np.ndarray:
+        """
+        Launch L_inf attack on the given time series data.
+
+        ### Returns:
+        :return: An array holding the adversarial examples.
+        """
+        return self._generate(self.features)
+
+    def _generate(self, x: np.ndarray, **kwargs) -> np.ndarray:
+        """
+        Internal method to perform the L_inf attack on the given time series data.
+
+        ### Parameters:
         :param x: An array with the original inputs to be attacked.
+
+        ### Returns:
         :return: An array holding the adversarial examples.
         """
         num_rows, num_cols = x.shape
@@ -72,14 +76,18 @@ class CarliniLinf:
         nb_batches = int(np.ceil(x_sequence.shape[0] / float(self.batch_size)))
         for i in trange(nb_batches, desc="C&W L_inf", disable = not self.verbose):
             index = i * self.batch_size
-            x_adv[index:index+self.batch_size] = (self.generate_batch(x_sequence[index:index+self.batch_size]))
+            x_adv[index:index+self.batch_size] = (self._generate_batch(x_sequence[index:index+self.batch_size]))
         print(x_adv.shape)
         return x_adv
     
-    def generate_batch(self, x: np.ndarray, **kwargs) -> np.ndarray:
+    def _generate_batch(self, x: np.ndarray, **kwargs) -> np.ndarray:
         """
-        Generate batched adversarial samples and return them in an array.
+        Internal method to generate batched adversarial samples and return them in an array.
+
+        ### Parameters:
         :param x: An array with the batched original inputs to be attacked.
+
+        ### Returns:
         :return: An array holding the batched adversarial examples.
         """
         
@@ -172,3 +180,16 @@ class CarliniLinf:
             tau *= self.decrease_factor
             
         return best_x_adv
+
+
+if __name__ == "__main__":
+    stage, parameters = start()
+
+    # Execute code block based on passed stage from Jespipe
+    if stage == "attack":
+        attack = CarliniLinf(parameters["model_path"], parameters["model_test_features"], parameters["attack_params"])
+        result = attack.attack()
+        save.adver_example(parameters["save_path"], parameters["attack_params"]["change"], result)
+
+    else:
+        raise ValueError("Received invalid stage {}. Please only pass valid stages from the pipeline.".format(stage))
