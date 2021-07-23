@@ -1,3 +1,4 @@
+import copy
 from typing import Tuple
 
 import joblib
@@ -335,6 +336,10 @@ if __name__ == "__main__":
         # Load test_features
         test_labels = parameters["model_labels"]
 
+        # Pull the name of the attack (Just pull the first example in the list)
+        attack_name = copy.deepcopy(parameters["adver_features"][0])
+        attack_name = attack_name.split("/"); attack_name = attack_name[-2]
+
         # Loop through each of the adversarial examples
         for adversary in parameters["adver_features"]:
             evaluate_lstm = EvaluateLSTM(joblib.load(adversary), test_labels, model)
@@ -343,7 +348,7 @@ if __name__ == "__main__":
             log_dict.update({perturb_budget: {"mse": mse, "rmse": rmse, "scatter_index": scatter_index, "mae": mae}})
 
         # Once looping through all the adversarial examples has completed, dump updated log dict
-        save.pickle_object(parameters["log_path"], "mse-rmse-si-mae", log_dict)
+        save.pickle_object(parameters["log_path"], "mse-rmse-si-mae-{}".format(attack_name), log_dict)
 
     else:
         raise ValueError("Received invalid stage {}. Please only pass valid stages from the pipeline.".format(stage))
