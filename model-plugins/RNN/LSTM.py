@@ -12,6 +12,7 @@ from jespipe.plugin.train.fit import Fit
 from jespipe.plugin.train.predict import Predict
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.losses import MeanAbsoluteError
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam
 
@@ -216,9 +217,11 @@ class EvaluateLSTM(Evaluate):
         - Positional value of each index in the tuple:
           - 0: Mean squared error of model's prediction.
           - 1: Root mean squared error of model's prediction.
+          - 2: Scatter index of model's prediction.
+          - 3: Mean absolute error of model's prediction.
         """
-        mse = self._eval_mse()
-        return mse, self._eval_rmse(mse)
+        mse = self._eval_mse(); rmse = self._eval_rmse(mse)
+        return mse, rmse, self._eval_scatter_index(rmse), self._eval_mean_absolute_error()
 
     def _eval_mse(self) -> float:
         """
@@ -245,6 +248,30 @@ class EvaluateLSTM(Evaluate):
         :return: Root mean squared error of the Sequential LSTM model's prediction.
         """
         return np.sqrt(mse)
+
+    def _eval_scatter_index(self, rmse: float) -> float:
+        """
+        Internal method to evaluate the scatter index
+        of the Sequential LSTM model's prediction.
+
+        ### Parameters:
+        :param rmse: Root mean squared error of the Sequential LSTM model's prediction.
+
+        ### Returns:
+        :return: Scatter index of the Sequential LSTM model's prediction.
+        """
+        return np.multiply(np.divide(rmse, np.mean(self.feature_test)), 100)
+
+    def _eval_mean_absolute_error(self) -> float:
+        """
+        Internal method to evaluate the mean absolute error
+        of the Sequential LSTM model's prediction.
+
+        ### Returns:
+        :return: Mean absolute error of the Sequential LSTM model's prediction.
+        """
+        mae = MeanAbsoluteError()
+        return mae(self.label_test, self.model_to_eval.predict(self.feature_test)).numpy()
 
 
 if __name__ == "__main__":
@@ -291,19 +318,19 @@ if __name__ == "__main__":
 
         # Evaluate model performance on prediction
         evaluate_lstm = EvaluateLSTM(data[2], data[3], fit_lstm.model)
-        mse, rmse = evaluate_lstm.model_evaluate()
+        mse, rmse, scatter_index, mae = evaluate_lstm.model_evaluate()
         
         # Create dictionary for logging mse and rmse and then save as a pickle to be loaded back into memory during the attacks
         # 0.0 marks 0.0 pertubation bugdet -> baseline performance
-        log_dict = {"0.0": {"mse": mse, "rmse": rmse}}
-        save.pickle_object(model_log_path, "mse-rmse", log_dict)
+        log_dict = {"0.0": {"mse": mse, "rmse": rmse, "scatter_index": scatter_index, "mae": mae}}
+        save.pickle_object(model_log_path, "mse-rmse-si-mae", log_dict)
 
     elif stage == "attack":
         # Load in model to evaluate
         model = parameters["model_path"]; model = load_model(model)
 
         # Load mse-rmse.pkl file to access dictionary
-        log_dict = joblib.load(parameters["log_path"] + "/mse-rmse.pkl")
+        log_dict = joblib.load(parameters["log_path"] + "/mse-rmse-si-mae.pkl")
 
         # Load test_features
         test_labels = parameters["model_labels"]
@@ -311,12 +338,12 @@ if __name__ == "__main__":
         # Loop through each of the adversarial examples
         for adversary in parameters["adver_features"]:
             evaluate_lstm = EvaluateLSTM(joblib.load(adversary), test_labels, model)
-            mse, rmse = evaluate_lstm.model_evaluate()
+            mse, rmse, scatter_index, mae = evaluate_lstm.model_evaluate()
             perturb_budget = adversary.split("/"); perturb_budget = perturb_budget[-1].split(".pkl"); perturb_budget = perturb_budget[0]
-            log_dict.update({perturb_budget: {"mse": mse, "rmse": rmse}})
+            log_dict.update({perturb_budget: {"mse": mse, "rmse": rmse, "scatter_index": scatter_index, "mae": mae}})
 
         # Once looping through all the adversarial examples has completed, dump updated log dict
-        save.pickle_object(parameters["log_path"], "mse-rmse", log_dict)
+        save.pickle_object(parameters["log_path"], "mse-rmse-si-mae", log_dict)
 
     else:
         raise ValueError("Received invalid stage {}. Please only pass valid stages from the pipeline.".format(stage))
