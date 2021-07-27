@@ -1,12 +1,44 @@
 import math
 import random
-from typing import List
+from typing import List, Tuple
 
 import joblib
+import matplotlib.colors as color
 import matplotlib.pyplot as plt
 import numpy as np
 from jespipe.plugin.start import start
 from jespipe.plugin.clean.plotter import Plot
+
+
+class MatplotColors:
+    """Class for selecting a random HTML color."""
+    def __init__(self) -> None:
+        """Create instance of MatplotColors class."""
+        self.html_colors = self._random_color_tuple()
+
+    def getrandomcolor(self) -> str:
+        """
+        Pick a random hexadecimal color code supported by Matplotlib.
+        
+        ### Returns:
+        :return: Random hexdecimal color code supported by Matplotlib.
+        """
+        return self.html_colors[random.randint(0, len(self.html_colors))]
+
+    def _random_color_tuple(self) -> Tuple[str]:
+        """
+        Internal function to query supported colors by Matplotlib.
+
+        ### Returns:
+        :return: Tuple containing the supported hexadecimal color codes.
+        """
+        color_dict = color.get_named_colors_mapping()
+        color_tuple = tuple()
+        for key in color_dict:
+            if isinstance(color_dict[key], str):
+                color_tuple += (color_dict[key],)
+
+        return color_tuple
 
 
 class RmseSiMae(Plot):
@@ -56,16 +88,18 @@ class RmseSiMae(Plot):
                 if float(key) not in x_axis:
                     x_axis.append(float(key))
 
-            x_axis = x_axis.sort()
+            x_axis.sort()
+
+            # Sort data in datum[1]
+            data_dict = self._sort_dict(x_axis, datum[1])
 
             # PLOT RMSE ON AXIS 1
             # Generate y_axis ticks for RMSE
             rmse_values = list()
-            for key in datum[1]:
-                rmse_values.append(datum[1][key]["rmse"])
+            for key in data_dict:
+                rmse_values.append(data_dict[key]["rmse"])
 
-            max_rmse = max(rmse_values)
-            y_axis_1_ticks = np.linspace(0.0, float(math.ceil(max_rmse)))
+            y_axis_1_ticks = np.linspace(0.0, float(math.ceil(max(rmse_values))))
 
             # Plot RMSE
             axis_1.plot(x_axis, rmse_values, color=ran_color_list[0], linestyle="solid")
@@ -78,11 +112,10 @@ class RmseSiMae(Plot):
 
             # Generate y-axis ticks for MAE
             mae_values = list()
-            for key in datum[1]:
-                mae_values.append(datum[1][key]["mae"])
+            for key in data_dict:
+                mae_values.append(data_dict[key]["mae"])
 
-            max_mae = max(mae_values)
-            y_axis_2_ticks = np.linspace(0.0, float(math.ceil(max_mae)))
+            y_axis_2_ticks = np.linspace(0.0, float(math.ceil(max(mae_values))))
 
             # Plot MAE
             axis_2.plot(x_axis, mae_values, color=ran_color_list[1], linestyle="solid")
@@ -100,9 +133,52 @@ class RmseSiMae(Plot):
         for datum in cw_linf_attack:
             ran_color_list = self._random_color_picker(2)
             fig, axis_1 = plt.subplots()
-            # TODO: Use the twinx method to add a second y axis for RMSE v.s. MAE
+
+            # Generate x_axis
+            x_axis = list()
+            for key in datum[1]:
+                if float(key) not in x_axis:
+                    x_axis.append(float(key))
+
+            x_axis.sort()
+
+            # Sort data in datum[1]
+            data_dict = self._sort_dict(x_axis, datum[1])
+
+            # PLOT RMSE ON AXIS 1
+            # Generate y_axis ticks for RMSE
+            rmse_values = list()
+            for key in data_dict:
+                rmse_values.append(data_dict[key]["rmse"])
+
+            y_axis_1_ticks = np.linspace(0.0, float(math.ceil(max(rmse_values))))
+
+            # Plot RMSE
+            axis_1.plot(x_axis, rmse_values, color=ran_color_list[0], linestyle="solid")
+            axis_1.set_xlabel("Perturbation Budget")
+            axis_1.set_ylabel("Root Mean Squared Error (RMSE)", color=ran_color_list[0])
+            axis_1.set_yticks(y_axis_1_ticks, labelcolor=ran_color_list[0])
+
+            # PLOT MAE ON AXIS 2
             axis_2 = axis_1.twinx()
+
+            # Generate y-axis ticks for MAE
+            mae_values = list()
+            for key in data_dict:
+                mae_values.append(data_dict[key]["mae"])
+
+            y_axis_2_ticks = np.linspace(0.0, float(math.ceil(max(mae_values))))
+
+            # Plot MAE
+            axis_2.plot(x_axis, mae_values, color=ran_color_list[1], linestyle="solid")
+            axis_2.set_ylabel("Mean Absolute Error (MAE)", color=ran_color_list[1])
+            axis_2.set_yticks(y_axis_2_ticks, labelcolor=ran_color_list[1])
+
+            fig.tight_layout()
             
+            model_tag = datum[0].split("/"); model_tag = model_tag[-1]
+            plt.title("RMSE and MAE as Perturbation Budget increases for CW_Linf attack on model {}".format(model_tag))
+            plt.savefig(self.save_path + "/{}-cw_linf-rmse-mae-{}.png".format(model_tag))
             plt.close()
         
         # Scattter Index over the change budget
@@ -119,10 +195,8 @@ class RmseSiMae(Plot):
             for key in datum[1]:
                 scatter_values.append(datum[1][key]["scatter_index"])
 
-        max_scatter = max(scatter_values)
-
         # Generate y_axis ticks
-        y_axis_ticks = np.linspace(0.0, float(math.ceil(max_scatter)))
+        y_axis_ticks = np.linspace(0.0, float(math.ceil(max(scatter_values))))
         plt.yticks(y_axis_ticks)
 
         # Generate x_axis
@@ -132,12 +206,13 @@ class RmseSiMae(Plot):
                 if float(key) not in x_axis:
                     x_axis.append(float(key))
 
-        x_axis = x_axis.sort()
+        x_axis.sort()
 
         for datum in cw_l2_attack:
             values = list()
-            for key in datum[1]:
-                values.append(datum[1][key]["scatter_index"])
+            data_dict = self._sort_dict(x_axis, datum[1])
+            for key in data_dict:
+                values.append(data_dict[key]["scatter_index"])
 
             # Append values to the plot
             line_name = datum[0].split("/"); line_name = line_name[-1]
@@ -159,11 +234,9 @@ class RmseSiMae(Plot):
         for datum in cw_linf_attack:
             for key in datum[1]:
                 scatter_values.append(datum[1][key]["scatter_index"])
-        
-        max_scatter = max(scatter_values)
 
         # Generate y_axis ticks
-        y_axis_ticks = np.linspace(0.0, float(math.ceil(max_scatter)))
+        y_axis_ticks = np.linspace(0.0, float(math.ceil(max(scatter_values))))
         plt.yticks(y_axis_ticks)
 
         # Generate x_axis
@@ -173,12 +246,13 @@ class RmseSiMae(Plot):
                 if float(key) not in x_axis:
                     x_axis.append(float(key))
 
-        x_axis = x_axis.sort()
+        x_axis.sort()
 
         for datum in cw_linf_attack:
             values = list()
-            for key in datum[1]:
-                values.append(datum[1][key]["scatter_index"])
+            data_dict = self._sort_dict(x_axis, datum[1])
+            for key in data_dict:
+                values.append(data_dict[key]["scatter_index"])
 
             # Append values to the plot
             line_name = datum[0].split("/"); line_name = line_name[-1]
@@ -201,10 +275,11 @@ class RmseSiMae(Plot):
         :return: List of hexadecimal colors.
         """
         color_list = list()
+        color_picker = MatplotColors()
 
         i = 0
         while i < num_of_categories:
-            ran_color = f"#{random.randrange(0x100000):06x}"
+            ran_color = color_picker.getrandomcolor()
             if ran_color not in color_list:
                 color_list.append(ran_color); i += 1
 
@@ -221,6 +296,23 @@ class RmseSiMae(Plot):
         i = random.randint(0, 3)
         return linestyles[i]
 
+    def _sort_dict(self, keys: list, dict_to_sort: dict) -> dict:
+        """
+        Internal method for sorting the dictionary created by Jespipe
+
+        ### Parameters:
+        :param keys: A sorted list containing the keys of the dictionary.
+        :param dict_to_sort: Dictionary to sort from least to greatest.
+
+        ### Returns:
+        :return: A sorted dictionary from least to greatest float values.
+        """
+        d = dict()
+        for key in keys:
+            if str(key) in dict_to_sort:
+                d[str(key)] = dict_to_sort[str(key)]
+
+        return d
 
 if __name__ == "__main__":
     stage, parameters = start()
