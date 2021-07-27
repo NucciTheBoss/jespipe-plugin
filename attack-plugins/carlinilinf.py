@@ -91,7 +91,7 @@ class CarliniLinf(Attack):
         # Initialize boolean to decide if advesarial examples should predict above or below original
         # Since the adv examples are normalized between [0,1], adv examples that predict values approaching 0 or 1 are difficult to generate, hence the bool
         mean = pred.mean()
-        above = (mean <= .5)
+        above = (mean <= self.mean)
 
 	if above:
             if mean + self.min_change > 0.9:
