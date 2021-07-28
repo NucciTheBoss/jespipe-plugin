@@ -336,7 +336,7 @@ if __name__ == "__main__":
         # Load mse-rmse.pkl file to access dictionary
         log_dict = joblib.load(parameters["log_path"] + "/mse-rmse-si-mae.pkl")
         rmse_log_dict = joblib.load(parameters["log_path"] + "/rmse.pkl")
-        mae_log_dict = joblib.load(parameters["log_path"], + "/mae.pkl")
+        mae_log_dict = joblib.load(parameters["log_path"] + "/mae.pkl")
         original_mean = joblib.load(parameters["log_path"] + "/original_mean.pkl")
 
         # Loop through each of the adversarial examples
