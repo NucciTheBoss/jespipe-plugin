@@ -99,14 +99,18 @@ class RmseSiMae(Plot):
             for key in data_dict:
                 rmse_values.append(data_dict[key]["rmse"])
 
-            y_axis_1_ticks = np.linspace(0.0, float(math.ceil(max(rmse_values))))
+            # Generate 10 ticks for the y_axis
+            y_axis_1_ticks = np.linspace(0.0, float(math.ceil(max(rmse_values))), num=10)
 
             # Plot RMSE
             axis_1.plot(x_axis, rmse_values, color=ran_color_list[0], linestyle="solid")
             axis_1.set_xlabel("Perturbation Budget")
             axis_1.set_ylabel("Root Mean Squared Error (RMSE)", color=ran_color_list[0])
             axis_1.set_yticks(y_axis_1_ticks)
-            axis_1.tick_params("y", colors=ran_color_list[0])
+            
+            for tick_label, tick_line in zip(axis_1.get_yticklabels(), axis_1.get_yticklines()):
+                tick_label.set_color(ran_color_list[0])
+                tick_line.set_color(ran_color_list[0])
 
             # PLOT MAE ON AXIS 2
             axis_2 = axis_1.twinx()
@@ -116,19 +120,21 @@ class RmseSiMae(Plot):
             for key in data_dict:
                 mae_values.append(data_dict[key]["mae"])
 
-            y_axis_2_ticks = np.linspace(0.0, float(math.ceil(max(mae_values))))
+            # Generate 10 ticks for the y_axis
+            y_axis_2_ticks = np.linspace(0.0, float(math.ceil(max(mae_values))), num=10)
 
             # Plot MAE
             axis_2.plot(x_axis, mae_values, color=ran_color_list[1], linestyle="solid")
             axis_2.set_ylabel("Mean Absolute Error (MAE)", color=ran_color_list[1])
             axis_2.set_yticks(y_axis_2_ticks)
-            axis_2.tick_params("y", colors=ran_color_list[1])
-
-            fig.tight_layout()
+            
+            for tick_label, tick_line in zip(axis_2.get_yticklabels(), axis_2.get_yticklines()):
+                tick_label.set_color(ran_color_list[1])
+                tick_line.set_color(ran_color_list[1])
 
             model_tag = datum[0].split("/"); model_tag = model_tag[-1]
             plt.title("RMSE and MAE as Perturbation Budget increases for CW_L2 attack on model {}".format(model_tag))
-            plt.savefig(self.save_path + "/{}-cw_l2-rmse-mae-{}.png".format(self.plot_name, model_tag))
+            plt.savefig(self.save_path + "/{}-cw_l2-rmse-mae-{}.png".format(self.plot_name, model_tag), bbox_inches="tight")
             plt.close()
 
         # CW_Linf ATTACK
@@ -153,14 +159,18 @@ class RmseSiMae(Plot):
             for key in data_dict:
                 rmse_values.append(data_dict[key]["rmse"])
 
-            y_axis_1_ticks = np.linspace(0.0, float(math.ceil(max(rmse_values))))
+            # Generate 10 ticks for the y_axis
+            y_axis_1_ticks = np.linspace(0.0, float(math.ceil(max(rmse_values))), num=10)
 
             # Plot RMSE
             axis_1.plot(x_axis, rmse_values, color=ran_color_list[0], linestyle="solid")
             axis_1.set_xlabel("Perturbation Budget")
             axis_1.set_ylabel("Root Mean Squared Error (RMSE)", color=ran_color_list[0])
             axis_1.set_yticks(y_axis_1_ticks)
-            axis_1.tick_params("y", colors=ran_color_list[0])
+
+            for tick_label, tick_line in zip(axis_1.get_yticklabels(), axis_1.get_yticklines()):
+                tick_label.set_color(ran_color_list[0])
+                tick_line.set_color(ran_color_list[0])
 
             # PLOT MAE ON AXIS 2
             axis_2 = axis_1.twinx()
@@ -170,19 +180,21 @@ class RmseSiMae(Plot):
             for key in data_dict:
                 mae_values.append(data_dict[key]["mae"])
 
-            y_axis_2_ticks = np.linspace(0.0, float(math.ceil(max(mae_values))))
+            # Generate 10 ticks for the y_axis
+            y_axis_2_ticks = np.linspace(0.0, float(math.ceil(max(mae_values))), num=10)
 
             # Plot MAE
             axis_2.plot(x_axis, mae_values, color=ran_color_list[1], linestyle="solid")
             axis_2.set_ylabel("Mean Absolute Error (MAE)", color=ran_color_list[1])
             axis_2.set_yticks(y_axis_2_ticks)
-            axis_2.tick_params("y", colors=ran_color_list[1])
-
-            fig.tight_layout()
+            
+            for tick_label, tick_line in zip(axis_2.get_yticklabels(), axis_2.get_yticklines()):
+                tick_label.set_color(ran_color_list[1])
+                tick_line.set_color(ran_color_list[1])
             
             model_tag = datum[0].split("/"); model_tag = model_tag[-1]
             plt.title("RMSE and MAE as Perturbation Budget increases for CW_Linf attack on model {}".format(model_tag))
-            plt.savefig(self.save_path + "/{}-cw_linf-rmse-mae-{}.png".format(self.plot_name, model_tag))
+            plt.savefig(self.save_path + "/{}-cw_linf-rmse-mae-{}.png".format(self.plot_name, model_tag), bbox_inches="tight")
             plt.close()
         
         # Scattter Index over the change budget
@@ -199,8 +211,8 @@ class RmseSiMae(Plot):
             for key in datum[1]:
                 scatter_values.append(datum[1][key]["scatter_index"])
 
-        # Generate y_axis ticks
-        y_axis_ticks = np.linspace(0.0, float(math.ceil(max(scatter_values))))
+        # Generate y_axis ticks; generate 10 ticks
+        y_axis_ticks = np.linspace(0.0, float(math.ceil(max(scatter_values))), num=10)
         plt.yticks(y_axis_ticks)
 
         # Generate x_axis
@@ -239,8 +251,8 @@ class RmseSiMae(Plot):
             for key in datum[1]:
                 scatter_values.append(datum[1][key]["scatter_index"])
 
-        # Generate y_axis ticks
-        y_axis_ticks = np.linspace(0.0, float(math.ceil(max(scatter_values))))
+        # Generate y_axis ticks; generate 10 ticks
+        y_axis_ticks = np.linspace(0.0, float(math.ceil(max(scatter_values))), num=10)
         plt.yticks(y_axis_ticks)
 
         # Generate x_axis
