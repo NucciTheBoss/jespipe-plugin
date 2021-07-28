@@ -283,7 +283,7 @@ class RmseSiMae(Plot):
             if ran_color not in color_list:
                 color_list.append(ran_color); i += 1
 
-        return ran_color
+        return color_list
 
     def _random_linestyle(self) -> str:
         """
