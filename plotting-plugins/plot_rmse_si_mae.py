@@ -25,7 +25,7 @@ class Tab10:
         ### Returns:
         :return: Random hexdecimal color code supported by Matplotlib.
         """
-        return self.tab10[random.randint(0, len(self.tab10) - 1)]
+        return self.tab10[random.randint(0, len(self.tab10)-1)]
 
     def __len__(self) -> int:
         """Return length of the Tab10 tuple."""
@@ -193,7 +193,7 @@ class RmseSiMae(Plot):
         # All the manipulations will be put on the same graph.
         # CW_L2 ATTACK
         plt.figure()
-        plt.xlabel("Perturbation Budget"); plt.ylabel("Scatter Index (in %)")
+        plt.xlabel("Perturbation Budget"); plt.ylabel("Scatter Index")
         ran_color_list = self._random_color_picker(len(cw_l2_attack)); i = 0
 
         # Find maximum scatter index value
@@ -237,7 +237,7 @@ class RmseSiMae(Plot):
 
         # CW_Linf ATTACK
         plt.figure()
-        plt.xlabel("Perturbation Budget"); plt.ylabel("Scatter Index (in %)")
+        plt.xlabel("Perturbation Budget"); plt.ylabel("Scatter Index")
         ran_color_list = self._random_color_picker(len(cw_linf_attack)); i = 0
 
         # Find maximum scatter index value
