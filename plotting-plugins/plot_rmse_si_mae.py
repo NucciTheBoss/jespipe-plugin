@@ -105,7 +105,8 @@ class RmseSiMae(Plot):
             axis_1.plot(x_axis, rmse_values, color=ran_color_list[0], linestyle="solid")
             axis_1.set_xlabel("Perturbation Budget")
             axis_1.set_ylabel("Root Mean Squared Error (RMSE)", color=ran_color_list[0])
-            axis_1.set_yticks(y_axis_1_ticks, labelcolor=ran_color_list[0])
+            axis_1.set_yticks(y_axis_1_ticks)
+            axis_1.tick_params("y", colors=ran_color_list[0])
 
             # PLOT MAE ON AXIS 2
             axis_2 = axis_1.twinx()
@@ -120,13 +121,14 @@ class RmseSiMae(Plot):
             # Plot MAE
             axis_2.plot(x_axis, mae_values, color=ran_color_list[1], linestyle="solid")
             axis_2.set_ylabel("Mean Absolute Error (MAE)", color=ran_color_list[1])
-            axis_2.set_yticks(y_axis_2_ticks, labelcolor=ran_color_list[1])
+            axis_2.set_yticks(y_axis_2_ticks)
+            axis_2.tick_params("y", colors=ran_color_list[1])
 
             fig.tight_layout()
 
             model_tag = datum[0].split("/"); model_tag = model_tag[-1]
             plt.title("RMSE and MAE as Perturbation Budget increases for CW_L2 attack on model {}".format(model_tag))
-            plt.savefig(self.save_path + "/{}-cw_l2-rmse-mae-{}.png".format(model_tag))
+            plt.savefig(self.save_path + "/{}-cw_l2-rmse-mae-{}.png".format(self.plot_name, model_tag))
             plt.close()
 
         # CW_Linf ATTACK
@@ -157,7 +159,8 @@ class RmseSiMae(Plot):
             axis_1.plot(x_axis, rmse_values, color=ran_color_list[0], linestyle="solid")
             axis_1.set_xlabel("Perturbation Budget")
             axis_1.set_ylabel("Root Mean Squared Error (RMSE)", color=ran_color_list[0])
-            axis_1.set_yticks(y_axis_1_ticks, labelcolor=ran_color_list[0])
+            axis_1.set_yticks(y_axis_1_ticks)
+            axis_1.tick_params("y", colors=ran_color_list[0])
 
             # PLOT MAE ON AXIS 2
             axis_2 = axis_1.twinx()
@@ -172,13 +175,14 @@ class RmseSiMae(Plot):
             # Plot MAE
             axis_2.plot(x_axis, mae_values, color=ran_color_list[1], linestyle="solid")
             axis_2.set_ylabel("Mean Absolute Error (MAE)", color=ran_color_list[1])
-            axis_2.set_yticks(y_axis_2_ticks, labelcolor=ran_color_list[1])
+            axis_2.set_yticks(y_axis_2_ticks)
+            axis_2.tick_params("y", colors=ran_color_list[1])
 
             fig.tight_layout()
             
             model_tag = datum[0].split("/"); model_tag = model_tag[-1]
             plt.title("RMSE and MAE as Perturbation Budget increases for CW_Linf attack on model {}".format(model_tag))
-            plt.savefig(self.save_path + "/{}-cw_linf-rmse-mae-{}.png".format(model_tag))
+            plt.savefig(self.save_path + "/{}-cw_linf-rmse-mae-{}.png".format(self.plot_name, model_tag))
             plt.close()
         
         # Scattter Index over the change budget
