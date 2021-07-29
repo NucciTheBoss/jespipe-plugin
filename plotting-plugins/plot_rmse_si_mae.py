@@ -1,13 +1,69 @@
 import random
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 from jespipe.plugin.start import start
 from jespipe.plugin.clean.plotter import Plot
+
+
+class FormalNameMap:
+    def __init__(self) -> None:
+        self.formal_names = {
+            "vanilla": "No data transformation",
+            "xgb": "XGBoost",
+            "pca-intrin": "PCA (intrinsic)",
+            "pca-full": "PCA (all features)",
+            "pca": "PCA",
+            "rf": "Random Forest",
+            "cand": "Candlestick"
+        }
+
+    def getformalname(self, tag: str) -> Union[str, None]:
+        """
+        Grab the formal name mapping for a model tag.
+
+        ### Returns:
+        :return: Formal name for a tag or None if tag is not in map.
+        """
+        for key in self.formal_names:
+            if key in tag.lower():
+                if key == "pca":
+                    if "pca-intrin" in tag.lower():
+                        return self.formal_names["pca-intrin"]
+
+                    elif "pca-full" in tag.lower():
+                        return self.formal_names["pca-full"]
+
+                    else:
+                        return self.formal_names["pca"]
+                
+                else:
+                    return self.formal_names[key]
+
+        # Exit case if key -> value not in mapping
+        return None
+
+    def hasname(self, tag: str) -> bool:
+        """
+        See if tag has a formal name.
+
+        ### Returns:
+        :return: True if tag has formal name in mapping; False if not in mapping.
+        """
+        for key in self.formal_names:
+            if key in tag.lower():
+                return True
+
+        # Exit case if key -> value not in mapping 
+        return False
+
+    def __add__(self, new_name: Tuple[str, str]) -> None:
+        """Add more formal name mappings."""
+        self.formal_names.update({new_name[0]: new_name[1]})
 
 
 @dataclass
@@ -206,6 +262,7 @@ class RmseSiMae(Plot):
 
         x_axis.sort()
 
+        formal_names = FormalNameMap()
         for datum in cw_l2_attack:
             values = list()
             data_dict = self._sort_dict(x_axis, datum[1])
@@ -214,16 +271,18 @@ class RmseSiMae(Plot):
 
             # Append values to the plot
             line_name = datum[0].split("/"); line_name = line_name[-1]
+            formal_name = formal_names.getformalname(line_name) if formal_names.hasname(line_name) else line_name
             if "vanilla" in line_name:
-                plt.plot(x_axis, values, color=ran_color_list[i], linewidth=3, linestyle=self._random_linestyle(), label=line_name)
+                plt.plot(x_axis, values, color=ran_color_list[i], linewidth=3, linestyle=self._random_linestyle(), label=formal_name)
 
             else:
-                plt.plot(x_axis, values, color=ran_color_list[i], linestyle=self._random_linestyle(), label=line_name)
+                plt.plot(x_axis, values, color=ran_color_list[i], linestyle=self._random_linestyle(), label=formal_name)
             
             i += 1
 
         plt.legend()
-        plt.savefig(self.save_path + "/{}_scatter-index-as-perturbation-budget-increases-for-cw_l2-attack.png".format(self.plot_name))
+        plt.savefig(self.save_path + "/{}_scatter-index-as-perturbation-budget-increases-for-cw_l2-attack.png".format(self.plot_name),
+                    bbox_inches="tight")
         plt.close()
 
         # CW_Linf ATTACK
@@ -250,6 +309,7 @@ class RmseSiMae(Plot):
 
         x_axis.sort()
 
+        formal_names = FormalNameMap()
         for datum in cw_linf_attack:
             values = list()
             data_dict = self._sort_dict(x_axis, datum[1])
@@ -258,16 +318,18 @@ class RmseSiMae(Plot):
 
             # Append values to the plot
             line_name = datum[0].split("/"); line_name = line_name[-1]
+            formal_name = formal_names.getformalname(line_name) if formal_names.hasname(line_name) else line_name
             if "vanilla" in line_name:
-                plt.plot(x_axis, values, color=ran_color_list[i], linewidth=3, linestyle=self._random_linestyle(), label=line_name)
+                plt.plot(x_axis, values, color=ran_color_list[i], linewidth=3, linestyle=self._random_linestyle(), label=formal_name)
 
             else:   
-                plt.plot(x_axis, values, color=ran_color_list[i], linestyle=self._random_linestyle(), label=line_name)
+                plt.plot(x_axis, values, color=ran_color_list[i], linestyle=self._random_linestyle(), label=formal_name)
             
             i += 1
 
         plt.legend()
-        plt.savefig(self.save_path + "/{}_scatter-index-as-perturbation-budget-increases-for-cw_linf-attack.png".format(self.plot_name))
+        plt.savefig(self.save_path + "/{}_scatter-index-as-perturbation-budget-increases-for-cw_linf-attack.png".format(self.plot_name),
+                    bbox_inches="tight")
         plt.close()
 
     def _random_color_picker(self, num_of_categories: int) -> List[str]:
