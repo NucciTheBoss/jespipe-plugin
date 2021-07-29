@@ -59,7 +59,7 @@ class CarliniLinf(Attack):
         ### Returns:
         :return: An array holding the adversarial examples.
         """
-	pred = self.model.predict(x)
+        pred = self.model.predict(x)
         self.mean = pred.mean()
 
         # Generate adversarial examples

@@ -1,3 +1,10 @@
-tensorflow==2.5.0
-Keras==2.4.3
+joblib==1.0.1
+tqdm==4.61.1
+matplotlib==3.4.2
 numpy==1.19.5
+tensorflow==2.5.0
+pandas==1.2.4
+xgboost==1.4.2
+dataclasses==0.8
+scikit_learn==0.24.2
+Keras==2.4.3
